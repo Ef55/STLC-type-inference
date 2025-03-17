@@ -1,0 +1,75 @@
+cabal-version: 2.2
+
+name:           reconstruction
+version:        0.1.0.0
+description:
+homepage:
+bug-reports:
+author:
+maintainer:
+copyright:
+license:
+build-type:     Simple
+
+source-repository head
+  type: git
+  location:
+
+common shared-properties
+  default-language: GHC2021
+  ghc-options:
+    -Wall
+    -Wcompat
+    -Widentities
+    -Wincomplete-record-updates
+    -Wincomplete-uni-patterns
+    -Wmissing-export-lists
+    -Wmissing-home-modules
+    -Wpartial-fields
+    -Wredundant-constraints
+    -Werror=incomplete-patterns
+  build-depends:
+    base >= 4 && < 5,
+    mtl,
+    autoenv,
+    prettyprinter,
+    containers,
+    array,
+    vec,
+    fin
+  default-extensions:
+    KindSignatures
+    , GADTs
+    , StandaloneDeriving
+    , FlexibleInstances
+    , FlexibleContexts
+    , MultiParamTypeClasses
+    , InstanceSigs
+    , DataKinds
+    , FunctionalDependencies
+    , TypeFamilies
+
+library
+  import: shared-properties
+  hs-source-dirs: src
+  build-tool-depends: happy:happy, alex:alex
+  exposed-modules:
+    Lexer
+    Parser
+    NameResolution
+    Syntax
+    Printer
+    Typer
+
+test-suite reconstruction-test
+  import: shared-properties
+  build-depends: reconstruction
+    , HUnit
+    , tasty, tasty-hunit
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Main.hs
+  other-modules:
+    Parse
+    Type
+

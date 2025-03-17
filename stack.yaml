@@ -1,0 +1,7 @@
+resolver: lts-22.36
+packages:
+- .
+extra-deps:
+- github: Ef55/autoenv
+  commit: 7179a8350f64f2fef784a3d9343b2e7db58af6d5
+notify-if-nix-on-path: false
