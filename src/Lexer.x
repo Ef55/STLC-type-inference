@@ -17,6 +17,17 @@ tokens :-
   -- Keywords
   "let"                           { const Let }
   "Type"                          { const Typ }
+  "Bool"                          { const Bool }
+  "Nat"                           { const Nat }
+  "True"                          { const VTrue }
+  "False"                         { const VFalse }
+  "0"                             { const Zero}
+  "Succ"                          { const Succ }
+  "Pred"                          { const Pred }
+  "IsZero"                        { const IsZero }
+  "if"                            { const If }
+  "then"                          { const Then }
+  "else"                          { const Else }
   -- Variables
   $alpha [$alpha $digit \_ \']*   { \s -> Var s }
   -- All special characters / operators
@@ -50,6 +61,10 @@ data Token
   | Parent Bool
   | Defeq
   | Wild
+  | Nat | Zero | Succ
+  | Pred | IsZero
+  | Bool | VTrue | VFalse
+  | If | Then | Else
   deriving (Eq, Show)
 
 lexer :: String -> [Token]

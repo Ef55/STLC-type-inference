@@ -27,8 +27,13 @@ n2 = typeTest "BB-Nat 2" "λ s: _. λ z: _. s (s z)" (Just "∀S. (S -> S) -> S 
 sa :: TestTree
 sa = typeTest "Self application" "λ s: _. s s" Nothing
 
+tapl1, tapl2, tapl3 :: TestTree
+tapl1 = typeTest "Identity" "λx:_. x" (Just "∀X. X -> X")
+tapl2 = typeTest "Chaining" "λz:_. λy:_. z (y True)" (Just "∀X1. ∀X0. (X0 -> X1) -> (Bool -> X0) -> X1")
+tapl3 = typeTest "Booleans" "λw:_. if True then False else w False" (Just "(Bool -> Bool) -> Bool")
+
 allTests :: TestTree
 allTests =
   testGroup
-    "Parser"
-    [n0, n1, n2, sa]
+    "Typer"
+    [n0, n1, n2, sa, testGroup "TAPL" [tapl1, tapl2, tapl3]]

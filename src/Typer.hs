@@ -67,6 +67,24 @@ genConstrains (App l r) = do
   return (tT, constrains <> lConstrains <> rConstrains)
 genConstrains (TAbs _) = error "Unsupported"
 genConstrains (TApp _ _) = error "Unsupported"
+genConstrains (CTrue) = return (Bool, [])
+genConstrains (CFalse) = return (Bool, [])
+genConstrains (CZero) = return (Nat, [])
+genConstrains (Succ t) = do
+  (tT, constrains) <- genConstrains t
+  return (Nat, Eq tT Nat : constrains)
+genConstrains (Pred t) = do
+  (tT, constrains) <- genConstrains t
+  return (Nat, Eq tT Nat : constrains)
+genConstrains (IsZero t) = do
+  (tT, constrains) <- genConstrains t
+  return (Bool, Eq tT Nat : constrains)
+genConstrains (Ite tcn t1 t2) = do
+  (tcnT, tcnConstrains) <- genConstrains tcn
+  (t1T, t1Constrains) <- genConstrains t1
+  (t2T, t2Constrains) <- genConstrains t2
+  r <- freshUVar
+  return (r, Eq tcnT Bool : Eq t1T r : Eq t2T r : (tcnConstrains <> t1Constrains <> t2Constrains))
 
 contains :: Int -> Typ m -> Bool
 contains _ (TVar _) = False
@@ -74,6 +92,8 @@ contains _ Hole = False
 contains i (UVar j) = i == j
 contains i (Arrow l r) = contains i l || contains i r
 contains i (Forall bnd) = getBody bnd & contains i
+contains _ Bool = False
+contains _ Nat = False
 
 substU :: forall m. Map.Map Int (Typ m) -> Typ m -> Typ m
 substU _ (TVar x) = TVar x
@@ -84,6 +104,8 @@ substU r (Forall bnd) =
   let (x, t) = unbind bnd
       r' = fmap (applyE (shift1E @Typ @m)) r
    in substU r' t & bind x & Forall
+substU _ Bool = Bool
+substU _ Nat = Nat
 
 data Unification1Result where
   Failed1 :: Unification1Result
@@ -131,6 +153,8 @@ generalizeOne i name = Forall . bind name . iter . applyE @Typ shift1E
         Forall bnd ->
           let (x, t'') = unbind bnd
            in Forall $ bind x (iter t'')
+        Bool -> Bool
+        Nat -> Nat
 
 collectUVar :: Typ m -> Set.Set Int
 collectUVar (TVar _) = Set.empty
@@ -138,6 +162,8 @@ collectUVar Hole = Set.empty
 collectUVar (UVar i) = Set.singleton i
 collectUVar (Arrow l r) = collectUVar l <> collectUVar r
 collectUVar (Forall bnd) = collectUVar $ getBody bnd
+collectUVar Bool = Set.empty
+collectUVar Nat = Set.empty
 
 generalize :: Typ Z -> Typ Z
 generalize t = foldl (\t' u -> generalizeOne u (LocalName ("$" <> show u)) t') t (collectUVar t)

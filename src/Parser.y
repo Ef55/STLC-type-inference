@@ -28,6 +28,18 @@ import Lexer (Token)
   ')'   { Lexer.Parent False }
 
   ':='  { Lexer.Defeq }
+
+  'Bool'    { Lexer.Bool }
+  'Nat'     { Lexer.Nat }
+  'True'    { Lexer.VTrue }
+  'False'   { Lexer.VFalse }
+  'Zero'    { Lexer.Zero }
+  'Succ'    { Lexer.Succ }
+  'Pred'    { Lexer.Pred }
+  'IsZero'  { Lexer.IsZero }
+  'if'      { Lexer.If }
+  'then'    { Lexer.Then }
+  'else'    { Lexer.Else }
 %%
 
 -- Grammar for types
@@ -49,6 +61,8 @@ typ3
   : var           { TVar $1 }
   | '_'           { Hole }
   | '(' typ ')'   { $2 }
+  | 'Bool'        { Bool }
+  | 'Nat'         { Nat }
 
 -- Grammar for terms
 t :: { Term }
@@ -58,11 +72,18 @@ t1 :: { Term }
 t1
   : 'λ' var ':' typ '.' t   { Abs $4 $2 $6 }
   | 'Λ' var '.' t           { TAbs $2 $4 }
+  | 'if' t1
+    'then' t1
+    'else' t1               { Ite $2 $4 $6 }
   | t2                      { $1 }
 
 t2 :: { Term }
 t2
   : t2 t3           { App $1 $2 }
+  | 'Succ' t3       { Succ $2 }
+  | 'Pred' t3       { Pred $2 }
+  | 'IsZero' t3     { IsZero $2 }
+  | 'Succ' t3       { Succ $2 }
   | t2 '[' typ ']'  { TApp $1 $3 }
   | t3 { $1 }
 
@@ -70,6 +91,9 @@ t3 :: { Term }
 t3
   : var         { Var $1 }
   | '(' t ')'   { $2 }
+  | 'True'      { CTrue }
+  | 'False'     { CFalse }
+  | 'Zero'      { CZero }
 
 {
 
@@ -80,6 +104,8 @@ data Typ where
   Hole :: Typ
   Arrow :: Typ -> Typ -> Typ
   Forall :: Identifier -> Typ -> Typ
+  Bool :: Typ
+  Nat :: Typ
   deriving (Eq, Show)
 
 data Term where
@@ -88,6 +114,13 @@ data Term where
   App :: Term -> Term -> Term
   TAbs :: Identifier -> Term -> Term
   TApp :: Term -> Typ -> Term
+  CTrue :: Term
+  CFalse :: Term
+  CZero :: Term
+  Succ :: Term -> Term
+  Pred :: Term -> Term
+  IsZero :: Term -> Term
+  Ite :: Term -> Term -> Term -> Term
   deriving (Eq, Show)
 
 happyError :: [Token] -> a

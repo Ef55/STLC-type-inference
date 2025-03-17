@@ -81,6 +81,8 @@ instance Disp (Typ m) m n where
     dx <- disp x
     dt <- atLevel 1 $ addTypBinder x $ disp t
     return $ PP.pretty "∀" <+> dx <+> PP.pretty "." <+> dt
+  disp Bool = return $ PP.pretty "Bool"
+  disp Nat = return $ PP.pretty "Nat"
 
 instance Disp (Term m n) m n where
   disp (Var i) = do
@@ -109,6 +111,23 @@ instance Disp (Term m n) m n where
     dl <- atLevel 2 $ disp l
     dr <- atLevel 0 $ disp r
     return $ dl <+> PP.brackets dr
+  disp CTrue = return $ PP.pretty "True"
+  disp CFalse = return $ PP.pretty "False"
+  disp CZero = return $ PP.pretty "Zero"
+  disp (Succ t) = do
+    dt <- disp t
+    return $ PP.pretty "Succ" <+> dt
+  disp (Pred t) = do
+    dt <- disp t
+    return $ PP.pretty "Pred" <+> dt
+  disp (IsZero t) = do
+    dt <- disp t
+    return $ PP.pretty "IsZero" <+> dt
+  disp (Ite t t1 t2) = do
+    dt <- disp t
+    dt1 <- disp t1
+    dt2 <- disp t2
+    return $ PP.pretty "if" <+> dt <+> PP.pretty "then" <+> dt1 <+> PP.pretty "else" <+> dt2
 
 instance Disp (FlipTerm n m) m n where
   disp (FlipTerm t) = disp t
