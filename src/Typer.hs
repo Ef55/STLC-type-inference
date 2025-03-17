@@ -51,13 +51,23 @@ getTyp x = do
   binders <- gets termBinders
   return $ snd $ binders ! x
 
+fillHoles :: Typ m -> TC m n (Typ m)
+fillHoles (TVar x) = return $ TVar x
+fillHoles Hole = freshUVar
+fillHoles (UVar x) = return $ UVar x
+fillHoles (Arrow l r) = Arrow <$> fillHoles l <*> fillHoles r
+fillHoles (Forall _) = error "Unsupported"
+fillHoles Bool = return Bool
+fillHoles Nat = return Nat
+
 genConstrains :: Term Z n -> TC Z n (Typ Z, [Constrain])
 genConstrains (Var x) = (,[]) <$> getTyp x
 genConstrains (Abs xT bnd) = do
   let (x, t) = unbind bnd
-  xT' <- freshUVar
-  (tT, constrains) <- addTermBinder x xT' $ genConstrains t
-  return (Arrow xT' tT, Eq xT' xT : constrains)
+  xT' <- fillHoles xT
+  xTV <- freshUVar
+  (tT, constrains) <- addTermBinder x xTV $ genConstrains t
+  return (Arrow xTV tT, Eq xTV xT' : constrains)
 genConstrains (App l r) = do
   (lT, lConstrains) <- genConstrains l
   (rT, rConstrains) <- genConstrains r
@@ -114,8 +124,8 @@ data Unification1Result where
 
 unify1 :: Constrain -> Unification1Result
 unify1 c = case c of
-  Eq Hole _ -> Unifier1 Map.empty
-  Eq _ Hole -> Unifier1 Map.empty
+  Eq Hole _ -> error "Hole should have been filled"
+  Eq _ Hole -> error "Hole should have been filled"
   Eq s t | s == t -> Unifier1 Map.empty
   Eq (UVar x) t | not (contains x t) -> Unifier1 $ Map.singleton x t
   Eq s (UVar x) | not (contains x s) -> Unifier1 $ Map.singleton x s
